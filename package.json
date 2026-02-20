@@ -6,25 +6,22 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typeorm": "typeorm-ts-node-commonjs"
+    "typeorm": "ts-node -r dotenv/config ./node_modules/typeorm/cli.js"
   },
   "dependencies": {
+    "dotenv": "^16.3.1",
+    "next": "^14.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "next": "14.0.0",
-    "typeorm": "^0.3.19",
+    "reflect-metadata": "^0.2.1",
     "sqlite3": "^5.1.6",
-    "reflect-metadata": "^0.1.13",
-    "date-fns": "^3.3.1",
-    "tailwindcss": "^3.4.0",
-    "postcss": "^8.4.32",
-    "autoprefixer": "^10.4.16"
+    "typeorm": "^0.3.19",
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "typescript": "^5.3.2",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
-    "@types/react-dom": "^18.2.18",
-    "@types/sqlite3": "^3.1.8"
+    "@types/react-dom": "^18.2.17",
+    "ts-node": "^10.9.2"
   }
 }

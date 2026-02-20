@@ -1,22 +1,28 @@
-import 'reflect-metadata'
-import { DataSource } from 'typeorm'
-import { Note } from '@/types/note'
+import 'reflect-metadata';
+import { DataSource } from 'typeorm';
+import { Note } from '@/types/note';
+import dotenv from 'dotenv';
 
+dotenv.config();
+
+// Initialize the SQLite database connection
 export const AppDataSource = new DataSource({
   type: 'sqlite',
   database: process.env.DATABASE_URL || './notes.db',
-  entities: [Note],
-  synchronize: true,
+  synchronize: true, // Automatically create database schema on startup
   logging: false,
-})
+  entities: [Note],
+  migrations: [],
+  subscribers: [],
+});
 
-let initialized = false
-
+// Function to initialize database connection
 export async function initializeDatabase() {
-  if (!initialized) {
-    await AppDataSource.initialize()
-    initialized = true
-    console.log('Database initialized')
+  try {
+    await AppDataSource.initialize();
+    console.log('Database connection established successfully');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    throw error;
   }
-  return AppDataSource
 }

@@ -1,19 +1,30 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class Note {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column()
+  title: string;
 
   @Column('text')
-  title!: string
-
-  @Column('text')
-  content!: string
+  content: string;
 
   @CreateDateColumn()
-  createdAt!: Date
+  createdAt: Date;
 
   @UpdateDateColumn()
-  updatedAt!: Date
+  updatedAt: Date;
+}
+
+export interface NoteData {
+  title: string;
+  content: string;
+}
+
+export interface NoteWithId extends NoteData {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
 }

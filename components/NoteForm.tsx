@@ -1,81 +1,106 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { Note } from '@/types/note'
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Note } from '@/types/note';
 
-interface NoteFormProps {
-  note?: Note
+type NoteFormProps = {
+  note?: Note | null;
+};
+
+interface ApiResponse {
+  error?: string;
+  id?: number;
 }
 
 export default function NoteForm({ note }: NoteFormProps) {
-  const router = useRouter()
-  const [title, setTitle] = useState(note?.title || '')
-  const [content, setContent] = useState(note?.content || '')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [title, setTitle] = useState(note?.title || '');
+  const [content, setContent] = useState(note?.content || '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (note) {
+      setTitle(note.title);
+      setContent(note.content);
+    }
+  }, [note]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+    setError(null);
+
     if (!title.trim() || !content.trim()) {
-      setError('Title and content are required')
-      return
+      setError('Title and content are required');
+      return;
     }
 
-    setIsSubmitting(true)
-    setError('')
-
+    setLoading(true);
+    
     try {
-      const url = note ? `/api/notes/${note.id}` : '/api/notes'
-      const method = note ? 'PUT' : 'POST'
-      
+      const url = note ? `/api/notes/${note.id}` : '/api/notes';
+      const method = note ? 'PUT' : 'POST';
+
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ title, content }),
-      })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim(), content: content.trim() }),
+      });
+
+      const data: ApiResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error('Failed to save note')
+        throw new Error(data.error || 'Failed to save note');
       }
 
-      router.push('/')
-      router.refresh()
+      // Redirect to home page after successful save
+      router.push('/');
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setIsSubmitting(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!note || !confirm('Are you sure you want to delete this note?')) {
-      return
-    }
+    if (!note || !confirm('Are you sure you want to delete this note?')) return;
+
+    setLoading(true);
+    setError(null);
 
     try {
       const response = await fetch(`/api/notes/${note.id}`, {
         method: 'DELETE',
-      })
+      });
+
+      const data: ApiResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error('Failed to delete note')
+        throw new Error(data.error || 'Failed to delete note');
       }
 
-      router.push('/')
-      router.refresh()
+      // Redirect to home page after successful delete
+      router.push('/');
+      router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete note')
+      setError(err instanceof Error ? err.message : 'Failed to delete note');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <form onSubmit={handleSubmit}>
-        <div className="mb-6">
+    <div className="max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-700">{error}</p>
+          </div>
+        )}
+
+        <div className="mb-4">
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
             Title
           </label>
@@ -84,8 +109,9 @@ export default function NoteForm({ note }: NoteFormProps) {
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             placeholder="Enter note title"
+            disabled={loading}
             required
           />
         </div>
@@ -99,49 +125,45 @@ export default function NoteForm({ note }: NoteFormProps) {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={8}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
             placeholder="Enter note content"
+            disabled={loading}
             required
           />
         </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md">
-            {error}
-          </div>
-        )}
-
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <div>
             {note && (
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mr-4"
+                disabled={loading}
               >
-                Delete
+                {loading ? 'Deleting...' : 'Delete'}
               </button>
             )}
           </div>
-          
-          <div className="flex space-x-3">
+          <div className="flex space-x-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
             >
-              {isSubmitting ? 'Saving...' : (note ? 'Update Note' : 'Create Note')}
+              {loading ? 'Saving...' : note ? 'Update Note' : 'Create Note'}
             </button>
           </div>
         </div>
       </form>
     </div>
-  )
+  );
 }
